@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "redhat.java"
+    ],
+    "unwantedRecommendations": [
+        "oracle.oracle-java"
+    ]
+}

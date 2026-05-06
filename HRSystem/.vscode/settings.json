@@ -7,13 +7,13 @@
         }
     ],
     "java.project.sourcePaths": [
-        "HRSystem/src"
+        "src"
     ],
     "java.project.sourceCompatibility": "17",
     "java.project.targetCompatibility": "17",
-    "java.project.outputPath": "HRSystem/WebContent/WEB-INF/classes",
+    "java.project.outputPath": "WebContent/WEB-INF/classes",
     "java.project.referencedLibraries": [
         "C:/Users/woojin/Documents/GitHub/PeopleFlow/HRSystem/WebContent/WEB-INF/lib/jakarta.servlet-api-6.0.0.jar",
-        "HRSystem/WebContent/WEB-INF/lib/**/*.jar"
+        "WebContent/WEB-INF/lib/**/*.jar"
     ]
 }

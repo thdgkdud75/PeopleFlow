@@ -56,7 +56,7 @@ HRSystem/
 
 ## 기술 스택
 
-- **Backend**: Java 17, Servlet 4.0, JSP
+- **Backend**: Java 17, Servlet 6.0, JSP
 - **Frontend**: Bootstrap 5.3, JavaScript (Fetch API)
 - **Database**: MySQL 8.x
 - **AI**: Anthropic Claude API (claude-sonnet-4-6)
@@ -91,7 +91,7 @@ CREATE DATABASE hrdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ### 라이브러리
 
 `WebContent/WEB-INF/lib/` 에 아래 JAR 추가:
-- `javax.servlet-api-4.0.1.jar`
+- `jakarta.servlet-api-6.0.0.jar`
 - `mysql-connector-j-8.x.jar`
 
 ---

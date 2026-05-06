@@ -45,8 +45,6 @@ logs/
 # ========================
 # IDE - Eclipse / STS
 # ========================
-.classpath
-.project
 .settings/
 .buildpath
 
