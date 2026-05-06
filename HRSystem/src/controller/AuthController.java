@@ -1,0 +1,56 @@
+package controller;
+
+import model.Employee;
+import service.EmployeeService;
+import util.SessionUtil;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet("/auth/*")
+public class AuthController extends HttpServlet {
+    private final EmployeeService service = new EmployeeService();
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        req.setCharacterEncoding("UTF-8");
+        String path = req.getPathInfo();
+
+        if ("/login".equals(path)) {
+            handleLogin(req, resp);
+        } else if ("/logout".equals(path)) {
+            handleLogout(req, resp);
+        }
+    }
+
+    private void handleLogin(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String empNo = req.getParameter("empNo");
+        String password = req.getParameter("password");
+
+        try {
+            Employee emp = service.login(empNo, password);
+            if (emp == null) {
+                resp.sendRedirect(req.getContextPath() + "/auth/login.jsp?error=1");
+                return;
+            }
+            SessionUtil.setLoginUser(req, emp);
+            if ("ADMIN".equals(emp.getRole())) {
+                resp.sendRedirect(req.getContextPath() + "/admin/dashboard.jsp");
+            } else {
+                resp.sendRedirect(req.getContextPath() + "/employee/mypage.jsp");
+            }
+        } catch (Exception e) {
+            resp.sendRedirect(req.getContextPath() + "/auth/login.jsp?error=2");
+        }
+    }
+
+    private void handleLogout(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        SessionUtil.invalidate(req);
+        resp.sendRedirect(req.getContextPath() + "/auth/login.jsp");
+    }
+}

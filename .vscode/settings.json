@@ -1,0 +1,5 @@
+{
+    "java.project.referencedLibraries": [
+        "HRSystem/WebContent/WEB-INF/lib/**/*.jar"
+    ]
+}

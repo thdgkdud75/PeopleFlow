@@ -1,0 +1,95 @@
+# ========================
+# 컴파일 결과물
+# ========================
+*.class
+*.jar
+*.war
+*.ear
+
+# ========================
+# 빌드 디렉토리
+# ========================
+build/
+target/
+out/
+bin/
+dist/
+
+# ========================
+# 환경변수 / 시크릿 (절대 올리면 안 됨)
+# ========================
+.env
+.env.*
+*.env
+config.properties
+secret.properties
+credentials.json
+
+# DB 접속 정보가 들어갈 수 있는 파일
+DBUtil.properties
+db.properties
+
+# ========================
+# API 키 보관 파일
+# ========================
+api-keys.txt
+api_keys.txt
+*.key
+
+# ========================
+# 로그
+# ========================
+*.log
+logs/
+
+# ========================
+# IDE - Eclipse / STS
+# ========================
+.classpath
+.project
+.settings/
+.buildpath
+
+# ========================
+# IDE - IntelliJ IDEA
+# ========================
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# ========================
+# IDE - VS Code
+# ========================
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/extensions.json
+
+# ========================
+# OS 파일
+# ========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ========================
+# WAS 배포 임시 파일
+# ========================
+.tomcat/
+wtpwebapps/
+WebContent/WEB-INF/lib/
+WebContent/WEB-INF/classes/
+
+# ========================
+# Maven / Gradle
+# ========================
+.gradle/
+gradle-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+
+# ========================
+# Claude Code 내부 파일 (코드와 무관)
+# ========================
+.code-review-graph/
+.claude/
