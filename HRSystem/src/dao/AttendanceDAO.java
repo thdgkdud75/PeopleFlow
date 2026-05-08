@@ -11,26 +11,34 @@ import java.util.List;
 public class AttendanceDAO {
 
     public int insert(Attendance att) throws SQLException {
-        String sql = "INSERT INTO attendance (emp_id, att_date, check_in, status) VALUES (?, ?, ?, 'NORMAL') " +
-                     "ON DUPLICATE KEY UPDATE check_in = VALUES(check_in)";
+        String sql = "INSERT INTO attendance (emp_id, att_date, check_in, status) VALUES (?, ?, ?, ?) " +
+                     "ON DUPLICATE KEY UPDATE check_in = VALUES(check_in), status = VALUES(status)";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, att.getEmpId());
             ps.setDate(2, Date.valueOf(att.getAttDate()));
             ps.setTime(3, Time.valueOf(att.getCheckIn()));
+            ps.setString(4, att.getStatus());
             return ps.executeUpdate();
         }
     }
 
     public int updateCheckOut(int empId, LocalDate date, java.time.LocalTime checkOut) throws SQLException {
-        String sql = "UPDATE attendance SET check_out=?, status=? WHERE emp_id=? AND att_date=?";
-        String status = checkOut.isBefore(java.time.LocalTime.of(18, 0)) ? "EARLY_LEAVE" : "NORMAL";
+        // LATE는 유지하고, 정시 이전 퇴근이면 EARLY_LEAVE로, 그 외엔 현재 상태 유지
+        String sql = "UPDATE attendance SET check_out=?, " +
+                     "status = CASE " +
+                     "  WHEN ? < '18:00:00' AND status = 'LATE' THEN 'LATE' " +
+                     "  WHEN ? < '18:00:00' THEN 'EARLY_LEAVE' " +
+                     "  ELSE status " +
+                     "END " +
+                     "WHERE emp_id=? AND att_date=?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setTime(1, Time.valueOf(checkOut));
-            ps.setString(2, status);
-            ps.setInt(3, empId);
-            ps.setDate(4, Date.valueOf(date));
+            ps.setTime(2, Time.valueOf(checkOut));
+            ps.setTime(3, Time.valueOf(checkOut));
+            ps.setInt(4, empId);
+            ps.setDate(5, Date.valueOf(date));
             return ps.executeUpdate();
         }
     }

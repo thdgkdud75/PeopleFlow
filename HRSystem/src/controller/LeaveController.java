@@ -22,7 +22,7 @@ public class LeaveController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        if (!SessionUtil.isLoggedIn(req)) { resp.sendRedirect(req.getContextPath() + "/auth/login.jsp"); return; }
+        if (!SessionUtil.isLoggedIn(req)) { resp.sendRedirect(req.getContextPath() + "/auth/login"); return; }
         String path = req.getPathInfo();
 
         try {
@@ -30,17 +30,22 @@ public class LeaveController extends HttpServlet {
                 Employee user = SessionUtil.getLoginUser(req);
                 List<LeaveRequest> list = service.getMyLeaves(user.getEmpId());
                 req.setAttribute("leaveList", list);
-                req.getRequestDispatcher("/employee/leave/history.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/views/employee/leave/history.jsp").forward(req, resp);
             } else if ("/list".equals(path)) {
                 if (!SessionUtil.isAdmin(req)) return;
                 List<LeaveRequest> list = service.getAllLeaves();
                 req.setAttribute("leaveList", list);
-                req.getRequestDispatcher("/admin/leave/list.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/views/admin/leave/list.jsp").forward(req, resp);
             } else if ("/pending".equals(path)) {
                 if (!SessionUtil.isAdmin(req)) return;
                 List<LeaveRequest> list = service.getPendingLeaves();
                 req.setAttribute("leaveList", list);
-                req.getRequestDispatcher("/admin/leave/approve.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/views/admin/leave/approve.jsp").forward(req, resp);
+            } else if ("/apply".equals(path)) {
+                Employee user = SessionUtil.getLoginUser(req);
+                int remainLeave = service.getRemainLeave(user.getEmpId());
+                req.setAttribute("remainLeave", remainLeave);
+                req.getRequestDispatcher("/WEB-INF/views/employee/leave/apply.jsp").forward(req, resp);
             }
         } catch (Exception e) {
             resp.sendError(500, e.getMessage());
@@ -50,7 +55,7 @@ public class LeaveController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        if (!SessionUtil.isLoggedIn(req)) { resp.sendRedirect(req.getContextPath() + "/auth/login.jsp"); return; }
+        if (!SessionUtil.isLoggedIn(req)) { resp.sendRedirect(req.getContextPath() + "/auth/login"); return; }
         req.setCharacterEncoding("UTF-8");
         String path = req.getPathInfo();
         Employee user = SessionUtil.getLoginUser(req);
@@ -66,8 +71,15 @@ public class LeaveController extends HttpServlet {
                 lr.setEndDate(end);
                 lr.setLeaveDays((int) ChronoUnit.DAYS.between(start, end) + 1);
                 lr.setReason(req.getParameter("reason"));
-                service.applyLeave(lr);
-                resp.sendRedirect(req.getContextPath() + "/leave/history");
+                try {
+                    service.applyLeave(lr);
+                    resp.sendRedirect(req.getContextPath() + "/leave/history");
+                } catch (IllegalStateException e) {
+                    int remainLeave = service.getRemainLeave(user.getEmpId());
+                    req.setAttribute("remainLeave", remainLeave);
+                    req.setAttribute("errorMsg", e.getMessage());
+                    req.getRequestDispatcher("/WEB-INF/views/employee/leave/apply.jsp").forward(req, resp);
+                }
             } else if ("/approve".equals(path)) {
                 if (!SessionUtil.isAdmin(req)) return;
                 int leaveId = Integer.parseInt(req.getParameter("leaveId"));

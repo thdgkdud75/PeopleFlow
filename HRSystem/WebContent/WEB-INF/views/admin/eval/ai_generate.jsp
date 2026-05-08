@@ -1,9 +1,7 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ include file="/common/header.jsp" %>
-<div class="container-fluid">
-<div class="row">
 <%@ include file="/common/nav.jsp" %>
-<div class="col-md-10 main-content">
+<div class="main-content">
     <h4 class="mb-4">AI 인사 평가서</h4>
     <div class="card">
         <div class="card-body">
@@ -24,7 +22,5 @@ ${aiReport}
             </div>
         </div>
     </div>
-</div>
-</div>
 </div>
 <%@ include file="/common/footer.jsp" %>

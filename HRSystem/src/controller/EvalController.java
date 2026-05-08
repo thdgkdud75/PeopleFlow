@@ -26,12 +26,12 @@ public class EvalController extends HttpServlet {
         try {
             if ("/list".equals(path)) {
                 String period = req.getParameter("period");
-                List<Evaluation> list = period != null
+                List<Evaluation> list = (period != null && !period.isBlank())
                     ? service.getEvalsByPeriod(period)
-                    : service.getEvalsByPeriod(java.time.Year.now() + "-H1");
+                    : service.getAllEvals();
                 req.setAttribute("evalList", list);
-                req.setAttribute("period", period);
-                req.getRequestDispatcher("/admin/eval/list.jsp").forward(req, resp);
+                req.setAttribute("period", period != null ? period : "");
+                req.getRequestDispatcher("/WEB-INF/views/admin/eval/list.jsp").forward(req, resp);
             }
         } catch (Exception e) {
             resp.sendError(500, e.getMessage());

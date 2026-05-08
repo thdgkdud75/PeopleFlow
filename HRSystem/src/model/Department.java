@@ -4,14 +4,10 @@ public class Department {
     private int deptId;
     private String deptName;
     private int managerId;
+    private String managerName;
+    private int empCount;
 
     public Department() {}
-
-    public Department(int deptId, String deptName, int managerId) {
-        this.deptId = deptId;
-        this.deptName = deptName;
-        this.managerId = managerId;
-    }
 
     public int getDeptId() { return deptId; }
     public void setDeptId(int deptId) { this.deptId = deptId; }
@@ -21,4 +17,10 @@ public class Department {
 
     public int getManagerId() { return managerId; }
     public void setManagerId(int managerId) { this.managerId = managerId; }
+
+    public String getManagerName() { return managerName; }
+    public void setManagerName(String managerName) { this.managerName = managerName; }
+
+    public int getEmpCount() { return empCount; }
+    public void setEmpCount(int empCount) { this.empCount = empCount; }
 }

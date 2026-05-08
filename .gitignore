@@ -91,3 +91,8 @@ pom.xml.releaseBackup
 # ========================
 .code-review-graph/
 .claude/
+
+
+
+.image/
+SERVER_GUIDE.md

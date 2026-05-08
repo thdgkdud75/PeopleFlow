@@ -1,9 +1,12 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="java.util.List, model.Department, model.Position" %>
+<%
+    List<Department> deptList = (List<Department>) request.getAttribute("deptList");
+    List<Position> posList = (List<Position>) request.getAttribute("posList");
+%>
 <%@ include file="/common/header.jsp" %>
-<div class="container-fluid">
-<div class="row">
 <%@ include file="/common/nav.jsp" %>
-<div class="col-md-10 main-content">
+<div class="main-content">
     <h4 class="mb-4">직원 등록</h4>
     <div class="card">
         <div class="card-body">
@@ -26,12 +29,22 @@
                         <input type="tel" name="phone" class="form-control">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">부서 ID</label>
-                        <input type="number" name="deptId" class="form-control" required>
+                        <label class="form-label">부서</label>
+                        <select name="deptId" class="form-select" required>
+                            <option value="">선택하세요</option>
+                            <% if (deptList != null) for (Department dept : deptList) { %>
+                            <option value="<%= dept.getDeptId() %>"><%= dept.getDeptName() %></option>
+                            <% } %>
+                        </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">직급 ID</label>
-                        <input type="number" name="posId" class="form-control" required>
+                        <label class="form-label">직급</label>
+                        <select name="posId" class="form-select" required>
+                            <option value="">선택하세요</option>
+                            <% if (posList != null) for (Position pos : posList) { %>
+                            <option value="<%= pos.getPosId() %>"><%= pos.getPosName() %></option>
+                            <% } %>
+                        </select>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">입사일</label>
@@ -63,7 +76,5 @@
             </form>
         </div>
     </div>
-</div>
-</div>
 </div>
 <%@ include file="/common/footer.jsp" %>

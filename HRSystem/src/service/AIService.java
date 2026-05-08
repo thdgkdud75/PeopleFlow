@@ -41,6 +41,10 @@ public class AIService {
         return AIUtil.callClaude(system, dataStr);
     }
 
+    public void saveEvalReport(int evalId, String aiReport) throws Exception {
+        evalDao.updateAiReport(evalId, aiReport);
+    }
+
     // 5번: AI 인사 평가서 생성 - 평가 데이터 기반으로 AI가 평가 보고서 작성
     public String generateEvalReport(int evalId) throws Exception, SQLException {
         Evaluation eval = evalDao.findById(evalId);

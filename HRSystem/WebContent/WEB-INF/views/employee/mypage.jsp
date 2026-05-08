@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="model.Employee" %>
 <%@ include file="/common/header.jsp" %>
 <%
@@ -30,6 +30,7 @@
                         <tr><th>전화번호</th><td><%= me.getPhone() %></td></tr>
                         <tr><th>입사일</th><td><%= me.getHireDate() %></td></tr>
                         <tr><th>상태</th><td><%= me.getStatus() %></td></tr>
+                        <tr><th>잔여 연차</th><td><span class="badge bg-info text-dark"><%= me.getRemainLeave() %>일</span></td></tr>
                     </table>
                 </div>
             </div>
@@ -55,7 +56,5 @@
             </div>
         </div>
     </div>
-</div>
-</div>
 </div>
 <%@ include file="/common/footer.jsp" %>

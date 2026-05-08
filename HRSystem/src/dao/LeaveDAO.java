@@ -62,6 +62,39 @@ public class LeaveDAO {
         return list;
     }
 
+    public int getRemainLeave(int empId) throws SQLException {
+        String sql = "SELECT remain_leave FROM employee WHERE emp_id=?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, empId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+        }
+        return 0;
+    }
+
+    public void deductLeave(int empId, int days) throws SQLException {
+        String sql = "UPDATE employee SET remain_leave = remain_leave - ? WHERE emp_id=?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, days);
+            ps.setInt(2, empId);
+            ps.executeUpdate();
+        }
+    }
+
+    public LeaveRequest findById(int leaveId) throws SQLException {
+        String sql = "SELECT lr.*, e.name as emp_name FROM leave_request lr " +
+                     "JOIN employee e ON lr.emp_id = e.emp_id WHERE lr.leave_id=?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, leaveId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return mapRow(rs);
+        }
+        return null;
+    }
+
     public List<LeaveRequest> findAll() throws SQLException {
         List<LeaveRequest> list = new ArrayList<>();
         String sql = "SELECT lr.*, e.name as emp_name FROM leave_request lr " +

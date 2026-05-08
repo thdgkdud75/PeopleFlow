@@ -1,10 +1,23 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ include file="/common/header.jsp" %>
-<div class="container-fluid">
-<div class="row">
 <%@ include file="/common/nav.jsp" %>
-<div class="col-md-10 main-content">
+<div class="main-content">
     <h4 class="mb-4">휴가 신청</h4>
+
+    <%-- 잔여 연차 배지 --%>
+    <div class="mb-3">
+        <span class="badge bg-info text-dark fs-6">잔여 연차: <%= request.getAttribute("remainLeave") %>일</span>
+    </div>
+
+    <%-- 오류 메시지 --%>
+    <% String errorMsg = (String) request.getAttribute("errorMsg");
+       if (errorMsg != null) { %>
+    <div class="alert alert-danger alert-dismissible fade show">
+        <%= errorMsg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <% } %>
+
     <div class="card">
         <div class="card-body">
             <form action="${pageContext.request.contextPath}/leave/apply" method="post">
@@ -38,7 +51,5 @@
             </form>
         </div>
     </div>
-</div>
-</div>
 </div>
 <%@ include file="/common/footer.jsp" %>

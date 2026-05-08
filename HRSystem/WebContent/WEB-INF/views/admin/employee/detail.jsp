@@ -1,13 +1,13 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
-<%@ page import="model.Employee" %>
-<%@ include file="/common/header.jsp" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="java.util.List, model.Employee, model.Department, model.Position" %>
 <%
     Employee emp = (Employee) request.getAttribute("employee");
+    List<Department> deptList = (List<Department>) request.getAttribute("deptList");
+    List<Position> posList = (List<Position>) request.getAttribute("posList");
 %>
-<div class="container-fluid">
-<div class="row">
+<%@ include file="/common/header.jsp" %>
 <%@ include file="/common/nav.jsp" %>
-<div class="col-md-10 main-content">
+<div class="main-content">
     <h4 class="mb-4">직원 상세</h4>
     <% if (emp != null) { %>
     <div class="card">
@@ -32,12 +32,20 @@
                         <input type="tel" name="phone" class="form-control" value="<%= emp.getPhone() %>">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">부서 ID</label>
-                        <input type="number" name="deptId" class="form-control" value="<%= emp.getDeptId() %>">
+                        <label class="form-label">부서</label>
+                        <select name="deptId" class="form-select">
+                            <% if (deptList != null) for (Department dept : deptList) { %>
+                            <option value="<%= dept.getDeptId() %>" <%= dept.getDeptId() == emp.getDeptId() ? "selected" : "" %>><%= dept.getDeptName() %></option>
+                            <% } %>
+                        </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">직급 ID</label>
-                        <input type="number" name="posId" class="form-control" value="<%= emp.getPosId() %>">
+                        <label class="form-label">직급</label>
+                        <select name="posId" class="form-select">
+                            <% if (posList != null) for (Position pos : posList) { %>
+                            <option value="<%= pos.getPosId() %>" <%= pos.getPosId() == emp.getPosId() ? "selected" : "" %>><%= pos.getPosName() %></option>
+                            <% } %>
+                        </select>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">상태</label>
@@ -61,7 +69,5 @@
         </div>
     </div>
     <% } %>
-</div>
-</div>
 </div>
 <%@ include file="/common/footer.jsp" %>

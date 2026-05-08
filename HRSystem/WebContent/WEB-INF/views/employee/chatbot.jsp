@@ -1,9 +1,7 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ include file="/common/header.jsp" %>
-<div class="container-fluid">
-<div class="row">
 <%@ include file="/common/nav.jsp" %>
-<div class="col-md-10 main-content">
+<div class="main-content">
     <h4 class="mb-4">HR 챗봇</h4>
     <div class="card" style="height: 70vh; display: flex; flex-direction: column;">
         <div class="card-body d-flex flex-column p-0">
@@ -22,8 +20,6 @@
             </div>
         </div>
     </div>
-</div>
-</div>
 </div>
 <%@ include file="/common/footer.jsp" %>
 

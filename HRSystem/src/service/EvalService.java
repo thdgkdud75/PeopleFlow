@@ -25,6 +25,10 @@ public class EvalService {
         return dao.findByEmpId(empId);
     }
 
+    public List<Evaluation> getAllEvals() throws SQLException {
+        return dao.findAll();
+    }
+
     public List<Evaluation> getEvalsByPeriod(String period) throws SQLException {
         return dao.findByPeriod(period);
     }

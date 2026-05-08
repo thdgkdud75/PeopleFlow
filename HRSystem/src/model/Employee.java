@@ -2,7 +2,8 @@ package model;
 
 import java.time.LocalDate;
 
-public class Employee {
+public class Employee implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
     private int empId;
     private String empNo;
     private String name;
@@ -14,6 +15,9 @@ public class Employee {
     private String status; // ACTIVE, RESIGNED, ON_LEAVE
     private String role;   // ADMIN, EMPLOYEE
     private String password;
+    private String deptName;
+    private String posName;
+    private int remainLeave;
 
     public Employee() {}
 
@@ -63,4 +67,13 @@ public class Employee {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public String getDeptName() { return deptName; }
+    public void setDeptName(String deptName) { this.deptName = deptName; }
+
+    public String getPosName() { return posName; }
+    public void setPosName(String posName) { this.posName = posName; }
+
+    public int getRemainLeave() { return remainLeave; }
+    public void setRemainLeave(int remainLeave) { this.remainLeave = remainLeave; }
 }

@@ -49,6 +49,18 @@ public class EvalDAO {
         return list;
     }
 
+    public List<Evaluation> findAll() throws SQLException {
+        List<Evaluation> list = new ArrayList<>();
+        String sql = "SELECT ev.*, e.name as emp_name FROM evaluation ev " +
+                     "JOIN employee e ON ev.emp_id = e.emp_id ORDER BY ev.eval_period DESC, ev.score DESC";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) list.add(mapRow(rs));
+        }
+        return list;
+    }
+
     public List<Evaluation> findByPeriod(String period) throws SQLException {
         List<Evaluation> list = new ArrayList<>();
         String sql = "SELECT ev.*, e.name as emp_name FROM evaluation ev " +

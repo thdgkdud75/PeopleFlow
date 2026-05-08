@@ -1,10 +1,8 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="java.util.List, model.Attendance" %>
 <%@ include file="/common/header.jsp" %>
-<div class="container-fluid">
-<div class="row">
 <%@ include file="/common/nav.jsp" %>
-<div class="col-md-10 main-content">
+<div class="main-content">
     <h4 class="mb-4">내 근태 현황</h4>
     <div class="mb-3 d-flex gap-2">
         <form action="${pageContext.request.contextPath}/attendance/checkin" method="post">
@@ -38,7 +36,5 @@
             </table>
         </div>
     </div>
-</div>
-</div>
 </div>
 <%@ include file="/common/footer.jsp" %>

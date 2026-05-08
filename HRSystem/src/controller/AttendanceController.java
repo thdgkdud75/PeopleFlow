@@ -28,14 +28,14 @@ public class AttendanceController extends HttpServlet {
                 Employee user = SessionUtil.getLoginUser(req);
                 List<Attendance> list = service.getMyAttendance(user.getEmpId());
                 req.setAttribute("attendanceList", list);
-                req.getRequestDispatcher("/employee/attendance.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/views/employee/attendance.jsp").forward(req, resp);
             } else if ("/list".equals(path)) {
                 if (!SessionUtil.isAdmin(req)) { resp.sendRedirect(req.getContextPath() + "/employee/mypage.jsp"); return; }
                 String month = req.getParameter("month");
                 List<Attendance> list = service.getMonthlyAttendance(month != null ? month : java.time.YearMonth.now().toString());
                 req.setAttribute("attendanceList", list);
                 req.setAttribute("month", month);
-                req.getRequestDispatcher("/admin/attendance/list.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/views/admin/attendance/list.jsp").forward(req, resp);
             }
         } catch (Exception e) {
             resp.sendError(500, e.getMessage());

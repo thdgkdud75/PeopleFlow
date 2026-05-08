@@ -45,6 +45,59 @@ public class EmployeeDAO {
         return list;
     }
 
+    public List<Employee> search(String keyword, int deptId, int posId, String status, int offset, int pageSize) throws SQLException {
+        List<Employee> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+            "SELECT e.*, d.dept_name, p.pos_name FROM employee e " +
+            "LEFT JOIN department d ON e.dept_id = d.dept_id " +
+            "LEFT JOIN `position` p ON e.pos_id = p.pos_id WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
+        appendConditions(sql, params, keyword, deptId, posId, status);
+        sql.append("ORDER BY e.emp_id LIMIT ? OFFSET ?");
+        params.add(pageSize);
+        params.add(offset);
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(mapRow(rs));
+        }
+        return list;
+    }
+
+    public int count(String keyword, int deptId, int posId, String status) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM employee e WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
+        appendConditions(sql, params, keyword, deptId, posId, status);
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+        }
+        return 0;
+    }
+
+    private void appendConditions(StringBuilder sql, List<Object> params,
+                                  String keyword, int deptId, int posId, String status) {
+        if (keyword != null && !keyword.isBlank()) {
+            sql.append("AND (e.name LIKE ? OR e.emp_no LIKE ?) ");
+            params.add("%" + keyword + "%");
+            params.add("%" + keyword + "%");
+        }
+        if (deptId > 0) { sql.append("AND e.dept_id = ? "); params.add(deptId); }
+        if (posId  > 0) { sql.append("AND e.pos_id = ? ");  params.add(posId);  }
+        if ("ALL".equals(status)) {
+            // 퇴직 포함 전체
+        } else if (status != null && !status.isBlank()) {
+            sql.append("AND e.status = ? "); params.add(status);
+        } else {
+            sql.append("AND e.status != 'RESIGNED' ");
+        }
+    }
+
     public int insert(Employee emp) throws SQLException {
         String sql = "INSERT INTO employee (emp_no, name, email, phone, dept_id, pos_id, hire_date, status, role, password) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -102,6 +155,9 @@ public class EmployeeDAO {
         emp.setStatus(rs.getString("status"));
         emp.setRole(rs.getString("role"));
         emp.setPassword(rs.getString("password"));
+        try { emp.setRemainLeave(rs.getInt("remain_leave")); } catch (Exception ignored) {}
+        try { emp.setDeptName(rs.getString("dept_name")); } catch (Exception ignored) {}
+        try { emp.setPosName(rs.getString("pos_name")); } catch (Exception ignored) {}
         return emp;
     }
 }

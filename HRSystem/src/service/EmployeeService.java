@@ -16,8 +16,19 @@ public class EmployeeService {
         return emp.getPassword().equals(password) ? emp : null;
     }
 
+    public static final int PAGE_SIZE = 10;
+
     public List<Employee> getAllEmployees() throws SQLException {
         return dao.findAll();
+    }
+
+    public List<Employee> searchEmployees(String keyword, int deptId, int posId, String status, int page) throws SQLException {
+        int offset = (page - 1) * PAGE_SIZE;
+        return dao.search(keyword, deptId, posId, status, offset, PAGE_SIZE);
+    }
+
+    public int countEmployees(String keyword, int deptId, int posId, String status) throws SQLException {
+        return dao.count(keyword, deptId, posId, status);
     }
 
     public Employee getEmployee(int empId) throws SQLException {

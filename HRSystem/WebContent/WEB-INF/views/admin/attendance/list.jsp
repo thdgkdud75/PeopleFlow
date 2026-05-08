@@ -1,10 +1,8 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="java.util.List, model.Attendance" %>
 <%@ include file="/common/header.jsp" %>
-<div class="container-fluid">
-<div class="row">
 <%@ include file="/common/nav.jsp" %>
-<div class="col-md-10 main-content">
+<div class="main-content">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4>근태 관리</h4>
         <form action="${pageContext.request.contextPath}/attendance/list" method="get" class="d-flex gap-2">
@@ -43,7 +41,5 @@
             </table>
         </div>
     </div>
-</div>
-</div>
 </div>
 <%@ include file="/common/footer.jsp" %>

@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="model.Salary" %>
 <%@ include file="/common/header.jsp" %>
 <%
@@ -26,7 +26,5 @@
         </div>
     </div>
     <% } %>
-</div>
-</div>
 </div>
 <%@ include file="/common/footer.jsp" %>

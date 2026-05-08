@@ -7,30 +7,30 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 public class AIUtil {
-    // TODO: AI 기능 연결 시 ANTHROPIC_API_KEY 환경변수 설정 후 주석 해제
-    private static final String API_URL = "https://api.anthropic.com/v1/messages";
-    private static final String MODEL = "claude-sonnet-4-6";
 
+    private static final String API_KEY = "REMOVED_API_KEY";
+    private static final String API_URL =
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+
+    // 기존 호출부(AIService)와 시그니처 동일하게 유지
     public static String callClaude(String systemPrompt, String userMessage) throws Exception {
-        String apiKey = System.getenv("ANTHROPIC_API_KEY");
-        if (apiKey == null || apiKey.isBlank())
-            throw new UnsupportedOperationException("ANTHROPIC_API_KEY 환경변수를 설정한 후 사용하세요.");
-
         HttpURLConnection conn = (HttpURLConnection) URI.create(API_URL).toURL().openConnection();
         conn.setRequestMethod("POST");
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setRequestProperty("x-api-key", apiKey);
-        conn.setRequestProperty("anthropic-version", "2023-06-01");
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
         conn.setDoOutput(true);
+        conn.setConnectTimeout(15_000);
+        conn.setReadTimeout(60_000);
 
-        String body = buildRequestBody(systemPrompt, userMessage);
+        String body = buildBody(systemPrompt, userMessage);
         try (OutputStream os = conn.getOutputStream()) {
             os.write(body.getBytes(StandardCharsets.UTF_8));
         }
 
-        if (conn.getResponseCode() != 200) {
-            String err = new String(conn.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
-            throw new RuntimeException("Claude API error " + conn.getResponseCode() + ": " + err);
+        int status = conn.getResponseCode();
+        if (status != 200) {
+            InputStream es = conn.getErrorStream();
+            String err = es != null ? new String(es.readAllBytes(), StandardCharsets.UTF_8) : "(no body)";
+            throw new RuntimeException("Gemini API error " + status + ": " + err);
         }
 
         try (InputStream is = conn.getInputStream()) {
@@ -39,26 +39,34 @@ public class AIUtil {
         }
     }
 
-    private static String buildRequestBody(String systemPrompt, String userMessage) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        sb.append("\"model\":\"").append(MODEL).append("\",");
-        sb.append("\"max_tokens\":2048,");
+    private static String buildBody(String systemPrompt, String userMessage) {
+        StringBuilder sb = new StringBuilder("{");
+
         if (systemPrompt != null && !systemPrompt.isBlank()) {
-            sb.append("\"system\":\"").append(escapeJson(systemPrompt)).append("\",");
+            sb.append("\"systemInstruction\":{\"parts\":[{\"text\":\"")
+              .append(escapeJson(systemPrompt))
+              .append("\"}]},");
         }
-        sb.append("\"messages\":[{\"role\":\"user\",\"content\":\"")
+
+        sb.append("\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"")
           .append(escapeJson(userMessage))
-          .append("\"}]");
+          .append("\"}]}],");
+
+        sb.append("\"generationConfig\":{\"maxOutputTokens\":2048}");
         sb.append("}");
         return sb.toString();
     }
 
-    // JSON 응답에서 content[0].text 값만 추출
+    // candidates[0].content.parts[0].text 추출
     private static String extractText(String json) {
-        String marker = "\"text\":\"";
+        String marker = "\"text\": \"";
         int start = json.indexOf(marker);
-        if (start == -1) throw new RuntimeException("API 응답 파싱 실패: " + json);
+        if (start == -1) {
+            // 공백 없는 형태도 시도
+            marker = "\"text\":\"";
+            start = json.indexOf(marker);
+        }
+        if (start == -1) throw new RuntimeException("Gemini 응답 파싱 실패: " + json);
         start += marker.length();
 
         StringBuilder text = new StringBuilder();

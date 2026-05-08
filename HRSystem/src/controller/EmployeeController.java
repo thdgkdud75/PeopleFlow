@@ -1,5 +1,7 @@
 package controller;
 
+import dao.DeptDAO;
+import dao.PositionDAO;
 import model.Employee;
 import service.EmployeeService;
 import util.SessionUtil;
@@ -16,6 +18,8 @@ import java.util.List;
 @WebServlet("/employee/*")
 public class EmployeeController extends HttpServlet {
     private final EmployeeService service = new EmployeeService();
+    private final DeptDAO deptDao = new DeptDAO();
+    private final PositionDAO posDao = new PositionDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -26,14 +30,44 @@ public class EmployeeController extends HttpServlet {
 
         try {
             if ("/list".equals(path)) {
-                List<Employee> list = service.getAllEmployees();
+                if (!SessionUtil.isAdmin(req)) { resp.sendRedirect(req.getContextPath() + "/auth/login"); return; }
+                String keyword = nvl(req.getParameter("keyword"));
+                int filterDept = toInt(req.getParameter("deptId"));
+                int filterPos  = toInt(req.getParameter("posId"));
+                String status  = nvl(req.getParameter("status"));
+                int page = Math.max(1, toIntDefault(req.getParameter("page"), 1));
+
+                List<Employee> list = service.searchEmployees(keyword, filterDept, filterPos, status, page);
+                int totalCount = service.countEmployees(keyword, filterDept, filterPos, status);
+                int totalPages = (int) Math.ceil((double) totalCount / EmployeeService.PAGE_SIZE);
+
                 req.setAttribute("employeeList", list);
-                req.getRequestDispatcher("/admin/employee/list.jsp").forward(req, resp);
+                req.setAttribute("totalCount",   totalCount);
+                req.setAttribute("totalPages",   Math.max(1, totalPages));
+                req.setAttribute("currentPage",  page);
+                req.setAttribute("keyword",      keyword);
+                req.setAttribute("filterDept",   filterDept);
+                req.setAttribute("filterPos",    filterPos);
+                req.setAttribute("filterStatus", status);
+                req.setAttribute("deptList", deptDao.findAll());
+                req.setAttribute("posList",  posDao.findAll());
+                req.getRequestDispatcher("/WEB-INF/views/admin/employee/list.jsp").forward(req, resp);
             } else if ("/detail".equals(path)) {
                 int empId = Integer.parseInt(req.getParameter("empId"));
                 Employee emp = service.getEmployee(empId);
                 req.setAttribute("employee", emp);
-                req.getRequestDispatcher("/admin/employee/detail.jsp").forward(req, resp);
+                req.setAttribute("deptList", deptDao.findAll());
+                req.setAttribute("posList", posDao.findAll());
+                req.getRequestDispatcher("/WEB-INF/views/admin/employee/detail.jsp").forward(req, resp);
+            } else if ("/mypage".equals(path)) {
+                req.getRequestDispatcher("/WEB-INF/views/employee/mypage.jsp").forward(req, resp);
+            } else if ("/chatbot".equals(path)) {
+                req.getRequestDispatcher("/WEB-INF/views/employee/chatbot.jsp").forward(req, resp);
+            } else if ("/register".equals(path)) {
+                if (!SessionUtil.isAdmin(req)) { resp.sendError(403); return; }
+                req.setAttribute("deptList", deptDao.findAll());
+                req.setAttribute("posList", posDao.findAll());
+                req.getRequestDispatcher("/WEB-INF/views/admin/employee/register.jsp").forward(req, resp);
             }
         } catch (Exception e) {
             resp.sendError(500, e.getMessage());
@@ -66,6 +100,10 @@ public class EmployeeController extends HttpServlet {
             resp.sendError(500, e.getMessage());
         }
     }
+
+    private String nvl(String v) { return v != null ? v.trim() : ""; }
+    private int toInt(String v) { try { return Integer.parseInt(v); } catch (Exception e) { return 0; } }
+    private int toIntDefault(String v, int def) { try { return Integer.parseInt(v); } catch (Exception e) { return def; } }
 
     private Employee buildEmployee(HttpServletRequest req) {
         Employee emp = new Employee();

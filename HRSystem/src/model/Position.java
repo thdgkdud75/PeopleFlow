@@ -5,15 +5,9 @@ public class Position {
     private String posName;
     private int level;
     private long baseSalary;
+    private int empCount;
 
     public Position() {}
-
-    public Position(int posId, String posName, int level, long baseSalary) {
-        this.posId = posId;
-        this.posName = posName;
-        this.level = level;
-        this.baseSalary = baseSalary;
-    }
 
     public int getPosId() { return posId; }
     public void setPosId(int posId) { this.posId = posId; }
@@ -26,4 +20,7 @@ public class Position {
 
     public long getBaseSalary() { return baseSalary; }
     public void setBaseSalary(long baseSalary) { this.baseSalary = baseSalary; }
+
+    public int getEmpCount() { return empCount; }
+    public void setEmpCount(int empCount) { this.empCount = empCount; }
 }

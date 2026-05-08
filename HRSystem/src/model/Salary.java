@@ -10,6 +10,8 @@ public class Salary {
     private long deduction;
     private long netPay;
     private String payStatus; // PENDING, PAID
+    private String deptName;
+    private String posName;
 
     public Salary() {}
 
@@ -39,4 +41,10 @@ public class Salary {
 
     public String getPayStatus() { return payStatus; }
     public void setPayStatus(String payStatus) { this.payStatus = payStatus; }
+
+    public String getDeptName() { return deptName; }
+    public void setDeptName(String deptName) { this.deptName = deptName; }
+
+    public String getPosName() { return posName; }
+    public void setPosName(String posName) { this.posName = posName; }
 }
