@@ -14,7 +14,8 @@ public class AIUtil {
     private static final String API_KEY = "REMOVED_API_KEY";
     private static final String API_URL =
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
-    private static final String LOCAL_MODEL_URL = "http://localhost:8000/chat";
+    private static final String LOCAL_MODEL_URL      = "http://localhost:8000/chat";
+    private static final String LOCAL_SUMMARIZE_URL  = "http://localhost:8000/summarize";
 
     /**
      * 파인튜닝된 EXAONE 로컬 모델 호출 (model_server.py 가 실행 중이어야 함).
@@ -25,6 +26,63 @@ public class AIUtil {
 
     public static String callLocalModel(String systemPrompt, String userMessage) throws Exception {
         return callLocalModel(systemPrompt, userMessage, 300);
+    }
+
+    /** Agent 챗봇 호출 — emp_id / role 포함 */
+    public static String callAgentChat(String message, int empId, String empName, String role, int maxTokens) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection)
+            URI.create(LOCAL_MODEL_URL).toURL().openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        conn.setDoOutput(true);
+        conn.setConnectTimeout(10_000);
+        conn.setReadTimeout(120_000);
+
+        String body = "{\"message\":\"" + escapeJson(message) + "\""
+                    + ",\"emp_id\":" + empId
+                    + ",\"emp_name\":\"" + escapeJson(empName) + "\""
+                    + ",\"role\":\"" + escapeJson(role) + "\""
+                    + ",\"max_tokens\":" + maxTokens + "}";
+
+        try (OutputStream os = conn.getOutputStream()) {
+            os.write(body.getBytes(StandardCharsets.UTF_8));
+        }
+        int status = conn.getResponseCode();
+        if (status != 200) {
+            InputStream es = conn.getErrorStream();
+            String err = es != null ? new String(es.readAllBytes(), StandardCharsets.UTF_8) : "(no body)";
+            throw new RuntimeException("Agent 오류 " + status + ": " + err);
+        }
+        try (InputStream is = conn.getInputStream()) {
+            return extractAnswer(new String(is.readAllBytes(), StandardCharsets.UTF_8));
+        }
+    }
+
+    /** 문서 요약 호출 (업무일지/회의록/출장보고서) */
+    public static String callSummarize(String docType, String content) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection)
+            URI.create(LOCAL_SUMMARIZE_URL).toURL().openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        conn.setDoOutput(true);
+        conn.setConnectTimeout(10_000);
+        conn.setReadTimeout(120_000);
+
+        String body = "{\"doc_type\":\"" + escapeJson(docType) + "\""
+                    + ",\"content\":\"" + escapeJson(content) + "\"}";
+
+        try (OutputStream os = conn.getOutputStream()) {
+            os.write(body.getBytes(StandardCharsets.UTF_8));
+        }
+        int status = conn.getResponseCode();
+        if (status != 200) {
+            InputStream es = conn.getErrorStream();
+            String err = es != null ? new String(es.readAllBytes(), StandardCharsets.UTF_8) : "(no body)";
+            throw new RuntimeException("Summarize 오류 " + status + ": " + err);
+        }
+        try (InputStream is = conn.getInputStream()) {
+            return extractAnswer(new String(is.readAllBytes(), StandardCharsets.UTF_8));
+        }
     }
 
     public static String callLocalModel(String systemPrompt, String userMessage, int maxTokens) throws Exception {

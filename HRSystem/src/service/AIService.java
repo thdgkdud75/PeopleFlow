@@ -20,16 +20,10 @@ public class AIService {
     private final LeaveDAO      leaveDao  = new LeaveDAO();
     private final SalaryDAO     salaryDao = new SalaryDAO();
 
-    // 1번: HR 챗봇 - 실시간 DB 컨텍스트를 포함하여 로컬 EXAONE 모델로 답변
+    // 1번: HR 챗봇 - Agent가 필요한 Tool을 직접 호출하여 실시간 데이터로 답변
     public String chatbot(String userMessage, String empName, int empId) throws Exception {
-        String context = buildEmployeeContext(empId);
-        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일"));
-        String system = "당신은 " + empName + " 직원을 돕는 사내 챗봇입니다. " +
-                "오늘 날짜는 " + today + "입니다. " +
-                "HR 관련 질문은 아래 실시간 데이터를 활용해 답변하고, 일반 질문에도 대화하세요. " +
-                "답변은 핵심만 짧고 정확하게 작성하세요. 불필요한 설명이나 추가 안내는 하지 마세요.\n\n" +
-                context;
-        return AIUtil.callLocalModel(system, userMessage, 250);
+        String role = "ADMIN".equals(empName) || empId == 1 ? "ADMIN" : "EMPLOYEE";
+        return AIUtil.callAgentChat(userMessage, empId, empName, role, 400);
     }
 
     private String buildEmployeeContext(int empId) throws SQLException {

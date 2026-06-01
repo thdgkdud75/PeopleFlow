@@ -26,14 +26,18 @@
                         <small class="text-muted">참석자: <%= m.getAttendees() %></small>
                         <% } %>
                     </div>
-                    <% if (m.getAiSummary() == null || m.getAiSummary().isBlank()) { %>
-                    <form action="${pageContext.request.contextPath}/doc/meeting/summarize" method="post" class="d-inline">
+                    <form action="${pageContext.request.contextPath}/doc/meeting/summarize" method="post" class="d-inline ai-summarize-form">
                         <input type="hidden" name="meetingId" value="<%= m.getMeetingId() %>">
-                        <button class="btn btn-sm btn-outline-primary">
+                        <% if (m.getAiSummary() == null || m.getAiSummary().isBlank()) { %>
+                        <button class="btn btn-sm btn-outline-primary ai-summarize-btn">
                             <i class="bi bi-stars"></i> AI 요약
                         </button>
+                        <% } else { %>
+                        <button class="btn btn-sm btn-outline-secondary ai-summarize-btn">
+                            <i class="bi bi-arrow-clockwise"></i> 다시 요약
+                        </button>
+                        <% } %>
                     </form>
-                    <% } %>
                 </div>
                 <div class="mt-2">
                     <p class="mb-1 fw-semibold">회의 내용</p>
@@ -96,4 +100,13 @@
         </div>
     </div>
 </div>
+<script>
+document.querySelectorAll('.ai-summarize-form').forEach(function(form) {
+    form.addEventListener('submit', function() {
+        var btn = form.querySelector('.ai-summarize-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> AI 요약 중...';
+    });
+});
+</script>
 <%@ include file="/common/footer.jsp" %>

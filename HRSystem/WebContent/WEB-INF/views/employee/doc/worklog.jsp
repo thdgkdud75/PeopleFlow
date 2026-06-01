@@ -23,14 +23,18 @@
                         <span class="badge bg-secondary me-2"><%= log.getLogDate() %></span>
                         <small class="text-muted">작성일</small>
                     </div>
-                    <% if (log.getAiSummary() == null || log.getAiSummary().isBlank()) { %>
-                    <form action="${pageContext.request.contextPath}/doc/worklog/summarize" method="post" class="d-inline">
+                    <form action="${pageContext.request.contextPath}/doc/worklog/summarize" method="post" class="d-inline ai-summarize-form">
                         <input type="hidden" name="logId" value="<%= log.getLogId() %>">
-                        <button class="btn btn-sm btn-outline-primary">
+                        <% if (log.getAiSummary() == null || log.getAiSummary().isBlank()) { %>
+                        <button class="btn btn-sm btn-outline-primary ai-summarize-btn">
                             <i class="bi bi-stars"></i> AI 요약
                         </button>
+                        <% } else { %>
+                        <button class="btn btn-sm btn-outline-secondary ai-summarize-btn">
+                            <i class="bi bi-arrow-clockwise"></i> 다시 요약
+                        </button>
+                        <% } %>
                     </form>
-                    <% } %>
                 </div>
                 <div class="mt-2">
                     <p class="mb-1 fw-semibold">원본 내용</p>
@@ -81,4 +85,13 @@
         </div>
     </div>
 </div>
+<script>
+document.querySelectorAll('.ai-summarize-form').forEach(function(form) {
+    form.addEventListener('submit', function() {
+        var btn = form.querySelector('.ai-summarize-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> AI 요약 중...';
+    });
+});
+</script>
 <%@ include file="/common/footer.jsp" %>

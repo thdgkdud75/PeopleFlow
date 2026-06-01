@@ -10,9 +10,11 @@ import util.AIUtil;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class DocumentService {
 
+    private static final Logger log = Logger.getLogger(DocumentService.class.getName());
     private final WorkLogDAO workLogDao           = new WorkLogDAO();
     private final MeetingMinutesDAO meetingDao    = new MeetingMinutesDAO();
     private final BusinessTripDAO tripDao         = new BusinessTripDAO();
@@ -31,14 +33,20 @@ public class DocumentService {
     }
 
     public String summarizeWorkLog(int logId) throws Exception {
+        log.info("[DEBUG] summarizeWorkLog called, logId=" + logId);
         WorkLog w = workLogDao.findById(logId);
         if (w == null) throw new IllegalArgumentException("업무일지를 찾을 수 없습니다.");
-        String input = "[업무일지]\n날짜: " + w.getLogDate() + "\n내용:\n" + w.getContent();
-        String summary = AIUtil.callLocalModel(
-            "당신은 업무 문서 요약 AI입니다. 핵심 업무 내용을 간결하게 정리하세요.",
-            input, 300);
-        workLogDao.updateSummary(logId, summary);
-        return summary;
+        String content = "[업무일지]\n날짜: " + w.getLogDate() + "\n내용:\n" + w.getContent();
+        log.info("[DEBUG] calling callSummarize, content length=" + content.length());
+        try {
+            String summary = AIUtil.callSummarize("worklog", content);
+            log.info("[DEBUG] callSummarize returned: " + (summary == null ? "NULL" : summary.substring(0, Math.min(50, summary.length()))));
+            workLogDao.updateSummary(logId, summary);
+            return summary;
+        } catch (Exception e) {
+            log.severe("[DEBUG] callSummarize EXCEPTION: " + e.getClass().getName() + " - " + e.getMessage());
+            throw e;
+        }
     }
 
     // ── 회의록 ────────────────────────────────────────────────
@@ -57,13 +65,11 @@ public class DocumentService {
     public String summarizeMeeting(int meetingId) throws Exception {
         MeetingMinutes m = meetingDao.findById(meetingId);
         if (m == null) throw new IllegalArgumentException("회의록을 찾을 수 없습니다.");
-        String input = "[회의록]\n제목: " + m.getTitle() +
-                       "\n날짜: " + m.getMeetingDate() +
-                       "\n참석자: " + (m.getAttendees() != null ? m.getAttendees() : "-") +
-                       "\n내용:\n" + m.getContent();
-        String summary = AIUtil.callLocalModel(
-            "당신은 회의록 정리 AI입니다. 회의 핵심 내용·결정사항·액션아이템을 간결하게 정리하세요.",
-            input, 400);
+        String content = "[회의록]\n제목: " + m.getTitle() +
+                         "\n날짜: " + m.getMeetingDate() +
+                         "\n참석자: " + (m.getAttendees() != null ? m.getAttendees() : "-") +
+                         "\n내용:\n" + m.getContent();
+        String summary = AIUtil.callSummarize("meeting", content);
         meetingDao.updateSummary(meetingId, summary);
         return summary;
     }
@@ -84,13 +90,11 @@ public class DocumentService {
     public String summarizeTrip(int tripId) throws Exception {
         BusinessTrip t = tripDao.findById(tripId);
         if (t == null) throw new IllegalArgumentException("출장보고서를 찾을 수 없습니다.");
-        String input = "[출장보고서]\n기간: " + t.getTripStart() + " ~ " + t.getTripEnd() +
-                       "\n출장지: " + t.getDestination() +
-                       "\n목적: " + t.getPurpose() +
-                       "\n내용:\n" + t.getContent();
-        String summary = AIUtil.callLocalModel(
-            "당신은 출장보고서 요약 AI입니다. 출장 목적·주요 활동·결과를 간결하게 요약하세요.",
-            input, 400);
+        String content = "[출장보고서]\n기간: " + t.getTripStart() + " ~ " + t.getTripEnd() +
+                         "\n출장지: " + t.getDestination() +
+                         "\n목적: " + t.getPurpose() +
+                         "\n내용:\n" + t.getContent();
+        String summary = AIUtil.callSummarize("trip", content);
         tripDao.updateSummary(tripId, summary);
         return summary;
     }

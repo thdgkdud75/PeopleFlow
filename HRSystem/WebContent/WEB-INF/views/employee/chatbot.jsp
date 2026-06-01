@@ -60,7 +60,7 @@ async function sendMessage() {
         const res = await fetch('${pageContext.request.contextPath}/ai/chatbot', { method: 'POST', body: params });
         const data = await res.json();
         chatMessages.removeChild(loadingDiv);
-        appendMessage(data.answer, false);
+        appendMessage(data.answer && data.answer.trim() ? data.answer : '죄송합니다, 답변을 생성하지 못했습니다.', false);
     } catch (e) {
         chatMessages.removeChild(loadingDiv);
         appendMessage('오류가 발생했습니다. 잠시 후 다시 시도해주세요.', false);
