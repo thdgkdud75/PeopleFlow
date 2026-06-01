@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS evaluation (
     score        INT DEFAULT 0,
     grade        VARCHAR(5),
     comments     TEXT,
+    work_summary TEXT,
     ai_report    TEXT,
     evaluator_id INT,
     eval_date    DATE,

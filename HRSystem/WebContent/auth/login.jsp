@@ -201,8 +201,8 @@
 
         <div class="hint-box">
             <strong>테스트 계정</strong><br>
-            관리자: <strong>ADMIN001</strong> / admin123 &nbsp;&nbsp;|&nbsp;&nbsp;
-            직원: <strong>EMP001</strong> / emp123
+            관리자: <strong>EMP001</strong> / admin1234 &nbsp;&nbsp;|&nbsp;&nbsp;
+            직원: <strong>EMP002</strong> / pass1234
         </div>
     </div>
 </div>

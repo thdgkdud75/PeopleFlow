@@ -31,7 +31,7 @@ public class AIController extends HttpServlet {
             if ("/chatbot".equals(path)) {
                 resp.setContentType("application/json; charset=UTF-8");
                 String message = req.getParameter("message");
-                String answer  = service.chatbot(message, user.getName());
+                String answer  = service.chatbot(message, user.getName(), user.getEmpId());
                 try (PrintWriter out = resp.getWriter()) {
                     out.print("{\"answer\":\"" + escapeJson(answer) + "\"}");
                 }
@@ -66,7 +66,16 @@ public class AIController extends HttpServlet {
             }
 
         } catch (Exception e) {
-            resp.sendError(500, e.getMessage());
+            String path2 = req.getPathInfo();
+            if ("/chatbot".equals(path2)) {
+                resp.setContentType("application/json; charset=UTF-8");
+                resp.setStatus(500);
+                try (PrintWriter out = resp.getWriter()) {
+                    out.print("{\"answer\":\"서버 오류: " + escapeJson(e.getClass().getSimpleName() + ": " + e.getMessage()) + "\"}");
+                }
+            } else {
+                resp.sendError(500, e.getMessage());
+            }
         }
     }
 

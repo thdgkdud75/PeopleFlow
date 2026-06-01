@@ -54,6 +54,7 @@ public class EvalController extends HttpServlet {
                 eval.setScore(Integer.parseInt(req.getParameter("score")));
                 eval.setGrade(req.getParameter("grade"));
                 eval.setComments(req.getParameter("comments"));
+                eval.setWorkSummary(req.getParameter("workSummary"));
                 eval.setEvaluatorId(user.getEmpId());
                 service.createEvaluation(eval);
                 resp.sendRedirect(req.getContextPath() + "/eval/list");

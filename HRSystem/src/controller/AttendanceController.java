@@ -32,9 +32,10 @@ public class AttendanceController extends HttpServlet {
             } else if ("/list".equals(path)) {
                 if (!SessionUtil.isAdmin(req)) { resp.sendRedirect(req.getContextPath() + "/employee/mypage.jsp"); return; }
                 String month = req.getParameter("month");
-                List<Attendance> list = service.getMonthlyAttendance(month != null ? month : java.time.YearMonth.now().toString());
+                String effectiveMonth = (month != null && !month.isBlank()) ? month : java.time.YearMonth.now().toString();
+                List<Attendance> list = service.getMonthlyAttendance(effectiveMonth);
                 req.setAttribute("attendanceList", list);
-                req.setAttribute("month", month);
+                req.setAttribute("month", effectiveMonth);
                 req.getRequestDispatcher("/WEB-INF/views/admin/attendance/list.jsp").forward(req, resp);
             }
         } catch (Exception e) {

@@ -27,7 +27,7 @@
     <div class="card mb-4" style="border-left: 4px solid #1E6FFF !important;">
         <div class="card-body">
             <div class="d-flex align-items-center mb-3">
-                <span class="badge bg-primary me-2"><i class="bi bi-stars"></i> Gemini AI 생성</span>
+                <span class="badge bg-primary me-2"><i class="bi bi-stars"></i> EXAONE AI 생성</span>
                 <span class="text-muted small">AI가 평가 데이터를 분석하여 작성한 인사 평가서입니다.</span>
                 <form action="${pageContext.request.contextPath}/ai/eval-report/save" method="post" class="ms-auto">
                     <input type="hidden" name="evalId" value="${evalId}">
@@ -150,6 +150,11 @@ ${aiReport}
               <option value="D">D</option>
             </select>
           </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">주요 업무 내용 <span class="text-muted small">(AI 평가서 생성에 활용됩니다)</span></label>
+          <textarea name="workSummary" class="form-control" rows="4"
+            placeholder="예: 결제 모듈 리팩토링 완료, 신규 API 3건 개발, 코드 리뷰 주 2회 참여, 팀 일정 준수율 95%"></textarea>
         </div>
         <div class="mb-3">
           <label class="form-label">평가 코멘트</label>

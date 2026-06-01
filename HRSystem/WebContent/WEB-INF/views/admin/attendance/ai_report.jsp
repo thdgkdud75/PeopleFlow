@@ -10,7 +10,7 @@
         <div class="card-body">
             <div class="d-flex align-items-center mb-3">
                 <span class="badge bg-primary me-2">AI 분석</span>
-                <small class="text-muted">Claude AI가 분석한 결과입니다</small>
+                <small class="text-muted">EXAONE AI가 분석한 결과입니다</small>
             </div>
             <div class="p-3 bg-light rounded" style="white-space: pre-wrap; line-height: 1.8;">
 ${aiReport}

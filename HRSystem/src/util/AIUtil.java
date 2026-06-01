@@ -5,12 +5,91 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Logger;
 
 public class AIUtil {
+
+    private static final Logger log = Logger.getLogger(AIUtil.class.getName());
 
     private static final String API_KEY = "REMOVED_API_KEY";
     private static final String API_URL =
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+    private static final String LOCAL_MODEL_URL = "http://localhost:8000/chat";
+
+    /**
+     * 파인튜닝된 EXAONE 로컬 모델 호출 (model_server.py 가 실행 중이어야 함).
+     */
+    public static String callLocalModel(String userMessage) throws Exception {
+        return callLocalModel(null, userMessage);
+    }
+
+    public static String callLocalModel(String systemPrompt, String userMessage) throws Exception {
+        return callLocalModel(systemPrompt, userMessage, 300);
+    }
+
+    public static String callLocalModel(String systemPrompt, String userMessage, int maxTokens) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection)
+            URI.create(LOCAL_MODEL_URL).toURL().openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        conn.setDoOutput(true);
+        conn.setConnectTimeout(10_000);
+        conn.setReadTimeout(120_000);
+
+        StringBuilder bodyBuf = new StringBuilder("{\"message\":\"")
+            .append(escapeJson(userMessage)).append("\"");
+        if (systemPrompt != null && !systemPrompt.isBlank()) {
+            bodyBuf.append(",\"system\":\"").append(escapeJson(systemPrompt)).append("\"");
+        }
+        bodyBuf.append(",\"max_tokens\":").append(maxTokens);
+        bodyBuf.append("}");
+
+        try (OutputStream os = conn.getOutputStream()) {
+            os.write(bodyBuf.toString().getBytes(StandardCharsets.UTF_8));
+        }
+
+        int status = conn.getResponseCode();
+        if (status != 200) {
+            InputStream es = conn.getErrorStream();
+            String err = es != null ? new String(es.readAllBytes(), StandardCharsets.UTF_8) : "(no body)";
+            throw new RuntimeException("로컬 모델 오류 " + status + ": " + err);
+        }
+
+        try (InputStream is = conn.getInputStream()) {
+            String resp = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            return extractAnswer(resp);
+        }
+    }
+
+    /** {"answer":"..."} 에서 answer 값 추출 */
+    private static String extractAnswer(String json) {
+        String marker = "\"answer\":\"";
+        int start = json.indexOf(marker);
+        if (start == -1) throw new RuntimeException("로컬 모델 응답 파싱 실패: " + json);
+        start += marker.length();
+        StringBuilder sb = new StringBuilder();
+        int i = start;
+        while (i < json.length()) {
+            char c = json.charAt(i);
+            if (c == '\\' && i + 1 < json.length()) {
+                char next = json.charAt(i + 1);
+                switch (next) {
+                    case '"':  sb.append('"');  i += 2; break;
+                    case '\\': sb.append('\\'); i += 2; break;
+                    case 'n':  sb.append('\n'); i += 2; break;
+                    case 'r':  sb.append('\r'); i += 2; break;
+                    case 't':  sb.append('\t'); i += 2; break;
+                    default:   sb.append(c);   i++;    break;
+                }
+            } else if (c == '"') {
+                break;
+            } else {
+                sb.append(c);
+                i++;
+            }
+        }
+        return sb.toString();
+    }
 
     // 기존 호출부(AIService)와 시그니처 동일하게 유지
     public static String callClaude(String systemPrompt, String userMessage) throws Exception {

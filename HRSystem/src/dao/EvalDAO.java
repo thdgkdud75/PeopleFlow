@@ -10,8 +10,8 @@ import java.util.List;
 public class EvalDAO {
 
     public int insert(Evaluation eval) throws SQLException {
-        String sql = "INSERT INTO evaluation (emp_id, eval_period, score, grade, comments, ai_report, evaluator_id, eval_date) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+        String sql = "INSERT INTO evaluation (emp_id, eval_period, score, grade, comments, work_summary, ai_report, evaluator_id, eval_date) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, eval.getEmpId());
@@ -19,8 +19,9 @@ public class EvalDAO {
             ps.setInt(3, eval.getScore());
             ps.setString(4, eval.getGrade());
             ps.setString(5, eval.getComments());
-            ps.setString(6, eval.getAiReport());
-            ps.setInt(7, eval.getEvaluatorId());
+            ps.setString(6, eval.getWorkSummary());
+            ps.setString(7, eval.getAiReport());
+            ps.setInt(8, eval.getEvaluatorId());
             return ps.executeUpdate();
         }
     }
@@ -96,6 +97,7 @@ public class EvalDAO {
         eval.setScore(rs.getInt("score"));
         eval.setGrade(rs.getString("grade"));
         eval.setComments(rs.getString("comments"));
+        eval.setWorkSummary(rs.getString("work_summary"));
         eval.setAiReport(rs.getString("ai_report"));
         eval.setEvaluatorId(rs.getInt("evaluator_id"));
         Date evalDate = rs.getDate("eval_date");

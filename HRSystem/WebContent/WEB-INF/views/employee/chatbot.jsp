@@ -3,9 +3,9 @@
 <%@ include file="/common/nav.jsp" %>
 <div class="main-content">
     <h4 class="mb-4">HR 챗봇</h4>
-    <div class="card" style="height: 70vh; display: flex; flex-direction: column;">
-        <div class="card-body d-flex flex-column p-0">
-            <div id="chatMessages" class="flex-grow-1 p-3 overflow-auto">
+    <div class="card" style="height: calc(100vh - 160px); display: flex; flex-direction: column; overflow: hidden;">
+        <div class="card-body d-flex flex-column p-0" style="min-height: 0; flex: 1;">
+            <div id="chatMessages" class="p-3" style="flex: 1; overflow-y: auto; min-height: 0;">
                 <div class="d-flex mb-3">
                     <div class="bg-primary text-white rounded-3 p-3" style="max-width:70%;">
                         안녕하세요! HR 챗봇입니다. 연차, 급여, 복지 등 궁금한 점을 물어보세요.
@@ -55,9 +55,9 @@ async function sendMessage() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
     try {
-        const formData = new FormData();
-        formData.append('message', message);
-        const res = await fetch('${pageContext.request.contextPath}/ai/chatbot', { method: 'POST', body: formData });
+        const params = new URLSearchParams();
+        params.append('message', message);
+        const res = await fetch('${pageContext.request.contextPath}/ai/chatbot', { method: 'POST', body: params });
         const data = await res.json();
         chatMessages.removeChild(loadingDiv);
         appendMessage(data.answer, false);

@@ -57,6 +57,21 @@ public class AttendanceDAO {
         return list;
     }
 
+    public List<Attendance> findByEmpIdAndMonth(int empId, String yearMonth) throws SQLException {
+        List<Attendance> list = new ArrayList<>();
+        String sql = "SELECT a.*, e.name as emp_name FROM attendance a " +
+                     "JOIN employee e ON a.emp_id = e.emp_id " +
+                     "WHERE a.emp_id=? AND DATE_FORMAT(a.att_date, '%Y-%m') = ? ORDER BY a.att_date DESC";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, empId);
+            ps.setString(2, yearMonth);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(mapRow(rs));
+        }
+        return list;
+    }
+
     public List<Attendance> findByMonth(String yearMonth) throws SQLException {
         List<Attendance> list = new ArrayList<>();
         String sql = "SELECT a.*, e.name as emp_name FROM attendance a " +

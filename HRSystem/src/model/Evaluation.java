@@ -10,6 +10,7 @@ public class Evaluation {
     private int score;
     private String grade; // S, A, B, C, D
     private String comments;
+    private String workSummary;
     private String aiReport;
     private int evaluatorId;
     private String evaluatorName;
@@ -37,6 +38,9 @@ public class Evaluation {
 
     public String getComments() { return comments; }
     public void setComments(String comments) { this.comments = comments; }
+
+    public String getWorkSummary() { return workSummary; }
+    public void setWorkSummary(String workSummary) { this.workSummary = workSummary; }
 
     public String getAiReport() { return aiReport; }
     public void setAiReport(String aiReport) { this.aiReport = aiReport; }

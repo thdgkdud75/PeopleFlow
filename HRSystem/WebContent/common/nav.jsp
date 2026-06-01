@@ -59,4 +59,22 @@
        href="${pageContext.request.contextPath}/leave/history">
         <i class="bi bi-umbrella"></i> 휴가 내역
     </a>
+    <a class="nav-link <%= currentUri.contains("/employee/chatbot") ? "active" : "" %>"
+       href="${pageContext.request.contextPath}/employee/chatbot">
+        <i class="bi bi-robot"></i> HR 챗봇
+    </a>
+    <hr>
+    <div class="sidebar-section-label">사내 문서</div>
+    <a class="nav-link <%= currentUri.contains("/doc/worklog") ? "active" : "" %>"
+       href="${pageContext.request.contextPath}/doc/worklog">
+        <i class="bi bi-journal-text"></i> 업무일지
+    </a>
+    <a class="nav-link <%= currentUri.contains("/doc/meeting") ? "active" : "" %>"
+       href="${pageContext.request.contextPath}/doc/meeting">
+        <i class="bi bi-people"></i> 회의록
+    </a>
+    <a class="nav-link <%= currentUri.contains("/doc/trip") ? "active" : "" %>"
+       href="${pageContext.request.contextPath}/doc/trip">
+        <i class="bi bi-airplane"></i> 출장보고서
+    </a>
 </div>
