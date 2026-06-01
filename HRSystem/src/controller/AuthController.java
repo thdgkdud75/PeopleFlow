@@ -10,9 +10,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 @WebServlet(urlPatterns = {"/auth/login", "/auth/logout"})
 public class AuthController extends HttpServlet {
+    private static final Logger log = Logger.getLogger(AuthController.class.getName());
     private final EmployeeService service = new EmployeeService();
 
     @Override
@@ -51,6 +53,7 @@ public class AuthController extends HttpServlet {
                 resp.sendRedirect(req.getContextPath() + "/employee/mypage");
             }
         } catch (Exception e) {
+            log.severe("로그인 처리 중 오류: " + e.getClass().getName() + " - " + e.getMessage());
             resp.sendRedirect(req.getContextPath() + "/auth/login.jsp?error=2");
         }
     }

@@ -179,6 +179,8 @@
 
         <% if ("1".equals(request.getParameter("error"))) { %>
         <div class="error-box"><i class="bi bi-exclamation-circle-fill"></i> 사번 또는 비밀번호가 올바르지 않습니다.</div>
+        <% } else if ("2".equals(request.getParameter("error"))) { %>
+        <div class="error-box"><i class="bi bi-exclamation-triangle-fill"></i> 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</div>
         <% } %>
 
         <form action="${pageContext.request.contextPath}/auth/login" method="post">
