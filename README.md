@@ -1,6 +1,8 @@
 # PeopleFlow - 사내 인사 관리 시스템 (HR System)
 
-Java Servlet / JSP 기반의 사내 인사 관리 시스템으로, Claude AI를 활용한 스마트 HR 기능을 포함합니다.
+Java Servlet / JSP 기반의 사내 인사 관리 시스템으로, 로컬 AI 모델(Qwen2.5-3B)을 활용한 스마트 HR 기능을 포함합니다.
+
+> AI Agent 구조 상세는 [AI_AGENT_GUIDE.md](AI_AGENT_GUIDE.md) 참고.
 
 ---
 
@@ -15,7 +17,7 @@ Java Servlet / JSP 기반의 사내 인사 관리 시스템으로, Claude AI를 
 | 급여 관리 | 급여 등록, 지급 확정, 명세서 조회 |
 | 휴가 관리 | 휴가 신청 / 승인 / 반려 |
 | 인사 평가 | 직원 평가 등록 및 조회 |
-| **AI HR 챗봇** | 직원이 HR 관련 질문 시 Claude AI가 실시간 답변 |
+| **AI HR 챗봇** | 직원이 HR 관련 질문 시 AI Agent가 실시간 데이터로 답변 |
 | **AI 근태 분석** | 월별 근태 데이터를 AI가 분석하여 관리자 리포트 생성 |
 | **AI 평가서 생성** | 평가 데이터 기반으로 AI가 공식 인사 평가서 자동 작성 |
 
@@ -41,7 +43,7 @@ HRSystem/
 │   └── util/
 │       ├── DBUtil.java       # DB 커넥션
 │       ├── SessionUtil.java  # 세션 / 권한 관리
-│       └── AIUtil.java       # Claude API 호출
+│       └── AIUtil.java       # 로컬 AI 모델 서버 호출
 └── WebContent/
     ├── WEB-INF/
     │   ├── web.xml
@@ -59,7 +61,7 @@ HRSystem/
 - **Backend**: Java 17, Servlet 6.0, JSP
 - **Frontend**: Bootstrap 5.3, JavaScript (Fetch API)
 - **Database**: MySQL 8.x
-- **AI**: Anthropic Claude API (claude-sonnet-4-6)
+- **AI**: Qwen2.5-3B-Instruct + LoRA (로컬 FastAPI 서버, port 8000)
 - **WAS**: Apache Tomcat 10.x
 
 ---
@@ -71,7 +73,6 @@ HRSystem/
 | 변수명 | 필수 | 설명 |
 |--------|------|------|
 | `DB_PASSWORD` | ✅ | MySQL 비밀번호 |
-| `ANTHROPIC_API_KEY` | ✅ (AI 기능 사용 시) | Claude API 키 |
 | `DB_USER` | 선택 | DB 사용자명 (기본값: `root`) |
 | `DB_URL` | 선택 | DB 접속 URL |
 
@@ -80,6 +81,8 @@ HRSystem/
 [System.Environment]::SetEnvironmentVariable("DB_PASSWORD", "your_password", "Machine")
 [System.Environment]::SetEnvironmentVariable("DB_USER", "root", "Machine")
 ```
+
+> AI는 외부 API 키 없이 로컬 모델 서버를 사용합니다. AI 기능을 쓰려면 Python 모델 서버(`model_server_qwen.py`, port 8000)가 실행 중이어야 합니다. 자세한 내용은 [AI_AGENT_GUIDE.md](AI_AGENT_GUIDE.md) 참고.
 
 ### DB 설정
 
@@ -108,7 +111,7 @@ CREATE DATABASE hrdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ## AI 기능 상세
 
 ### 1. HR 챗봇 (`/employee/chatbot.jsp`)
-직원이 연차, 급여, 복지 등 HR 관련 질문을 입력하면 Claude AI가 실시간으로 답변합니다.
+직원이 연차, 급여, 복지 등 HR 관련 질문을 입력하면 AI Agent가 실시간 DB 데이터를 조회하여 답변합니다.
 
 ### 2. 근태 분석 (`/admin/attendance/ai_report.jsp`)
 월별 근태 데이터(지각·결근·조기퇴근 현황)를 AI가 분석하여 관리자용 리포트를 생성합니다.

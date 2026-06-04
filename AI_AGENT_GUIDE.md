@@ -209,7 +209,7 @@ FastAPI 서버 (uvicorn, port 8000)
   → POST /employee/ai/chatbot  (Java)
   → AIController
   → AIService.chatbot(message, empName, empId)
-  → AIUtil.callAgentChat(message, empId, role)
+  → AIUtil.callAgentChat(message, empId, empName, role, maxTokens)
   → POST http://localhost:8000/chat
   → Python Agent 루프 (최대 3회 반복)
       → Qwen 모델 추론
