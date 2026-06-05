@@ -45,7 +45,7 @@ HRSystem/
 │       ├── SessionUtil.java  # 세션 / 권한 관리
 │       └── AIUtil.java       # 로컬 AI 모델 서버 호출
 └── WebContent/
-    ├── WEB-INF/
+    ├── WEB-INF/    
     │   ├── web.xml
     │   └── lib/              # 외부 라이브러리 (JAR)
     ├── common/               # 공통 header / footer / nav
