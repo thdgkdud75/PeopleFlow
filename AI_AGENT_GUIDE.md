@@ -428,3 +428,121 @@ def resolve(self, query, ctx):
 | `/chat` | POST | HR 챗봇 (A2A: Orchestrator + 6 Sub-Agents) |
 | `/summarize` | POST | 문서 요약 (업무일지/회의록/출장) |
 | `/health` | GET | 서버 상태 확인 |
+
+---
+
+# 📌 [TODO] 내일 작업 — 챗봇 서버 경량화 + Docker vLLM 요약 서버
+
+> 작성일: 2026-06-05 / 목표: 챗봇과 요약을 **물리적으로 분리**하고, 요약만 vLLM으로 가속
+
+## 0. 왜 이렇게 나누나 (배경)
+
+현재 챗봇은 **LLM을 전혀 안 씀**(결정론적, 0.26초). 즉 GPU에 올라간 Qwen 모델은
+**오로지 `/summarize` 하나만을 위해** 존재한다. 따라서:
+
+```
+[목표 구조]
+  ┌─ 챗봇 서버 (경량, 포트 8000) ──────────────┐
+  │   /chat      → 키워드+DB (모델 로딩 X, GPU 불필요)
+  │   /summarize → 프롬프트 구성 후 vLLM에 위임 (프록시)
+  │   /health
+  └────────────────────────────────────────────┘
+              │ HTTP (요약 생성만)
+              ▼
+  ┌─ vLLM 서버 (Docker, 포트 8001) ────────────┐
+  │   /v1/chat/completions  ← Qwen2.5-3B + LoRA │
+  └────────────────────────────────────────────┘
+```
+
+**핵심 이점**: Java(`AIUtil`)는 **건드릴 필요 없음**. 챗봇 서버가 `/summarize`를
+계속 받아서 내부적으로 vLLM에 넘기므로, Java는 여전히 `localhost:8000`만 호출.
+
+---
+
+## Part A. 챗봇 서버 경량화 (리스크 0, 먼저 해도 됨)
+
+`model_server_qwen.py`를 복사 → `chat_server.py`로 만들고:
+
+1. **제거**: `torch`, `transformers`, `peft`, `BitsAndBytesConfig`, 모델 로딩 블록,
+   `generate_text()`, TF32 설정 — 전부 삭제
+2. **유지**: `db_query`, 모든 `get_*` 도구 함수, 6개 에이전트 `resolve()`,
+   `keyword_route`, `run_orchestrator`, `/chat`, `/health`
+3. **`/summarize` 변경**: 모델 직접 호출 대신 vLLM으로 HTTP 요청
+   ```python
+   import httpx
+   VLLM_URL = "http://localhost:8001/v1/chat/completions"
+
+   @app.post("/summarize", response_model=ChatResponse)
+   def summarize(req: SummarizeRequest):
+       system = SYSTEM_SUMMARIZE.get(req.doc_type, SYSTEM_SUMMARIZE["worklog"])
+       payload = {
+           "model": "qwen-lora",
+           "messages": [
+               {"role": "system", "content": system},
+               {"role": "user",   "content": req.content},
+           ],
+           "max_tokens": 384,
+           "temperature": 0.0,
+       }
+       r = httpx.post(VLLM_URL, json=payload, timeout=120)
+       answer = r.json()["choices"][0]["message"]["content"]
+       return ChatResponse(answer=answer)
+   ```
+4. **검증**: vLLM 없이도 `/chat`은 정상 작동해야 함 (모델 의존성 0 확인)
+   - 서버 재시작이 30초+ → **5초 이내**로 줄어드는지 확인
+
+---
+
+## Part B. Docker vLLM 서버 (5060 호환 관문 주의)
+
+1. **Docker Desktop 설치** (WSL2 백엔드 활성화)
+2. **GPU 패스스루 확인**:
+   ```powershell
+   docker run --rm --gpus all nvidia/cuda:12.8.0-base-ubuntu22.04 nvidia-smi
+   ```
+   → RTX 5060이 보이면 OK. 안 보이면 NVIDIA Container Toolkit / 드라이버 점검
+3. **⚠️ Blackwell(sm_120) 호환 이미지 확보** (가장 큰 변수):
+   - `vllm/vllm-openai:latest`가 CUDA 12.8+ 기반인지 확인
+   - 안 되면 nightly 태그 또는 직접 빌드 필요
+4. **vLLM 실행** (Qwen2.5-3B + LoRA):
+   ```powershell
+   docker run --gpus all -p 8001:8000 `
+     -v C:\Users\woojin\qwen-finetuned:/lora `
+     vllm/vllm-openai:latest `
+     --model Qwen/Qwen2.5-3B-Instruct `
+     --enable-lora --lora-modules qwen-lora=/lora `
+     --quantization bitsandbytes `
+     --max-model-len 4096 `
+     --gpu-memory-utilization 0.85
+   ```
+5. **동작 확인**:
+   ```bash
+   curl http://localhost:8001/v1/chat/completions -H "Content-Type: application/json" \
+     -d '{"model":"qwen-lora","messages":[{"role":"user","content":"테스트"}],"max_tokens":50}'
+   ```
+
+---
+
+## Part C. 연결 및 검증
+
+1. 챗봇 서버(`chat_server.py`)의 `/summarize`가 vLLM(8001)을 호출하도록 연결
+2. **3종 문서 요약 테스트**: worklog / meeting / trip 모두 정상 포맷 확인
+3. **속도 측정**: 16.7초 → 몇 초로 줄었는지 기록
+4. Java 브라우저 플로우(요약 버튼)에서 끝까지 동작 확인
+
+---
+
+## Part D. 롤백 / 안전장치
+
+- 기존 `model_server_qwen.py`는 **삭제하지 말고 백업으로 보관**
+- vLLM 5060 호환이 끝내 안 되면 → Part A(경량화)만 적용하고
+  요약은 기존 transformers 방식 유지 (구조 분리만으로도 챗봇 서버 재시작이 빨라짐)
+
+## 시작 명령 요약 (내일 순서)
+
+```
+1. Part A: chat_server.py 만들고 모델 의존성 제거 → /chat 테스트
+2. Part B: Docker Desktop + GPU 패스스루(nvidia-smi) 확인
+3. Part B: vLLM 이미지가 5060에서 뜨는지부터 검증  ← 여기가 관문
+4. Part C: 연결 + 요약 3종 테스트 + 속도 측정
+```
