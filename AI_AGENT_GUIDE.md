@@ -459,7 +459,7 @@ def resolve(self, query, ctx):
 
 ---
 
-## Part A. 챗봇 서버 경량화 (리스크 0, 먼저 해도 됨)
+## Part A. 챗봇 서버 경량화 (리스크 0, 먼저 해도 됨) ✅ 2026-06-11 완료
 
 `model_server_qwen.py`를 복사 → `chat_server.py`로 만들고:
 
@@ -491,9 +491,40 @@ def resolve(self, query, ctx):
 4. **검증**: vLLM 없이도 `/chat`은 정상 작동해야 함 (모델 의존성 0 확인)
    - 서버 재시작이 30초+ → **5초 이내**로 줄어드는지 확인
 
+### ✅ Part A 실행 결과 (2026-06-11)
+
+**무엇을 했나**: `C:\Users\woojin\chat_server.py` 신규 생성. 기존
+`model_server_qwen.py`는 **백업으로 그대로 보존**(Part D 안전장치).
+
+**왜 이렇게 했나**: 챗봇(`/chat`)은 이미 결정론적(키워드+DB)이라 LLM이 전혀
+필요 없는데도, 서버가 켜질 때마다 Qwen2.5-3B(4-bit)를 GPU에 올리느라 재시작에
+30초+ 가 걸렸다. 모델은 오직 `/summarize` 하나 때문에 떠 있었다. 그래서
+챗봇 서버에서 모델을 완전히 들어내고, 요약은 vLLM(8001)에 HTTP 위임하도록 분리.
+
+**제거한 것**: `torch`, `transformers`, `peft`, `BitsAndBytesConfig`,
+모델 로딩 블록, `generate_text()`, TF32 설정.
+**`/summarize` 변경**: `httpx`로 vLLM(`http://localhost:8001/v1/chat/completions`)에
+프록시. vLLM 미가동 시 502 대신 안전한 에러 메시지 반환(try/except).
+Java(`AIUtil`)는 여전히 `localhost:8000`만 호출 → **수정 불필요**.
+
+**검증 결과**:
+| 항목 | 기존(model_server_qwen) | 경량(chat_server) |
+|---|---|---|
+| import 시 torch/transformers 로딩 | O (필수) | **X (전혀 안 올라옴)** |
+| 모듈 import 시간 | — | **0.64초** |
+| 서버 기동(ready) | 30초+ | **사실상 즉시(<1초)** |
+| `/chat` 서버 지연 | 0.26초 | **0.025~0.15초** |
+| `/summarize` | transformers 직접 | vLLM 프록시(미가동 시 graceful) |
+
+- `/chat` 5종(연차·급여·평가·직원정보·오늘근태) 모두 정상 응답 확인.
+- `/summarize`는 vLLM 미가동 상태에서 `요약 서버(vLLM)에 연결할 수 없습니다`
+  메시지 정상 반환(서버 안 죽음). → Part B에서 vLLM 띄우면 바로 연결됨.
+
+**실행 방법**: `python C:\Users\woojin\chat_server.py` (포트 8000, GPU 불필요)
+
 ---
 
-## Part B. Docker vLLM 서버 (5060 호환 관문 주의)
+## Part B. Docker vLLM 서버 (5060 호환 관문 주의) ✅ 2026-06-11 완료
 
 1. **Docker Desktop 설치** (WSL2 백엔드 활성화)
 2. **GPU 패스스루 확인**:
@@ -521,14 +552,78 @@ def resolve(self, query, ctx):
      -d '{"model":"qwen-lora","messages":[{"role":"user","content":"테스트"}],"max_tokens":50}'
    ```
 
+### ✅ Part B 실행 결과 (2026-06-11)
+
+**관문(sm_120 호환) 통과 여부 — 통과.** vLLM 0.22.1 이미지(`vllm/vllm-openai:latest`,
+9.22GB)가 RTX 5060(Blackwell, compute capability **12.0 = sm_120**)에서 정상 구동됨.
+Blackwell 비호환 문제는 **없었다**.
+
+**겪은 문제와 해결 (증상→원인→해결)**:
+
+1. **GPU 패스스루**: `docker run --gpus all ... nvidia-smi` →
+   `RTX 5060 Laptop GPU, 8151MiB, driver 595.79, compute_cap 12.0` 정상 인식. ✓
+
+2. **(증상)** 컨테이너가 기동 직후 `Exited (1)`.
+   **(원인)** `ValueError: Free memory on device cuda:0 (6.87/7.96 GiB) is less than
+   desired GPU memory utilization (0.9, 7.16 GiB)`. 전체 8GB 중 ~1.1GB를 Windows
+   디스플레이가 이미 쓰고 있어, `--gpu-memory-utilization 0.90`(7.16GB) 요구가 거부됨.
+   **(해결)** `0.90 → 0.80`으로 낮추고, 8GB 환경 안정성을 위해 `--enforce-eager`
+   (CUDA 그래프 캡처 생략 → VRAM 절약 + 기동 빠름) 추가. → 정상 기동.
+   KV 캐시 3.66GiB, 최대 동시성 26배, 엔진 초기화 9초.
+
+3. **경로 깨짐**: bash에서 `-v C:\Users\...` 의 백슬래시가 `C:Userswoojin...`으로
+   먹혀 `Access is denied`. **(해결)** PowerShell + 슬래시 경로(`C:/Users/woojin/...`)로 실행.
+
+**최종 실행 명령** (실제 적용본):
+```powershell
+docker run -d --name vllm-summary --gpus all -p 8001:8000 `
+  -v C:/Users/woojin/.cache/huggingface:/root/.cache/huggingface `   # 베이스모델 캐시 재사용(6GB 재다운로드 방지)
+  -v C:/Users/woojin/qwen-finetuned:/lora `
+  vllm/vllm-openai:latest `
+  --model Qwen/Qwen2.5-3B-Instruct `
+  --enable-lora --lora-modules qwen-lora=/lora `
+  --quantization bitsandbytes `
+  --max-model-len 4096 --gpu-memory-utilization 0.80 --enforce-eager `
+  --served-model-name qwen-lora
+```
+
 ---
 
-## Part C. 연결 및 검증
+## Part C. 연결 및 검증 ✅ 2026-06-11 완료
 
 1. 챗봇 서버(`chat_server.py`)의 `/summarize`가 vLLM(8001)을 호출하도록 연결
 2. **3종 문서 요약 테스트**: worklog / meeting / trip 모두 정상 포맷 확인
 3. **속도 측정**: 16.7초 → 몇 초로 줄었는지 기록
 4. Java 브라우저 플로우(요약 버튼)에서 끝까지 동작 확인
+
+### ✅ Part C 실행 결과 (2026-06-11)
+
+**(증상)** `/summarize` 첫 테스트가 HTTP 500.
+**(원인)** vLLM 요약은 정상 생성됐으나, chat_server가 결과를 콘솔에 `print`할 때
+이모지(📋, `\U0001f4cb`)를 Windows cp949 콘솔이 못 찍어 `UnicodeEncodeError`로
+엔드포인트가 죽음. **요약 파이프라인이 아니라 로깅이 원인.**
+**(해결)** chat_server.py 상단에서 `sys.stdout/stderr.reconfigure(encoding="utf-8")`로
+UTF-8 고정. → 한글·이모지 로그 정상, 500 해소.
+
+**3종 문서 요약 끝단 측정 (chat_server → vLLM 프록시 경유)**:
+
+| 문서 | 시간 | 포맷 |
+|---|---|---|
+| worklog (업무일지) | 16.3초 | ✅ 주요업무/완료/이슈 |
+| meeting (회의록) | 12.6초 | ✅ 개요/논의/결정/액션 |
+| trip (출장보고서) | 12.9초 | ✅ 개요/활동/성과/후속 |
+
+**⚠️ 속도에 대한 솔직한 평가**:
+- **단일 요청 지연은 기존 transformers(16.7초)와 거의 같다** (12~16초). bitsandbytes
+  양자화 + `--enforce-eager` 조합이라 토큰당 ~70ms로, vLLM의 핵심 가속(PagedAttention)
+  이 8GB·bnb 환경에서는 단일 요청엔 크게 안 먹힘.
+- **vLLM의 진짜 이득은 (a) 동시 요청(continuous batching, 26배 동시성) — 여러 명이
+  동시에 요약해도 안 느려짐, (b) 챗봇 서버에서 모델/GPU를 완전 분리 → 재시작 즉시.**
+- **콜드 스타트 주의**: 컨테이너 기동 후 첫 요약은 LoRA 로드+컴파일로 **~88초** 걸림.
+  이후엔 정상(12~16초). 운영 시 기동 직후 워밍업 요청 1회 권장.
+
+**더 빠르게 하려면 (선택)**: `--enforce-eager` 제거(CUDA 그래프) → 단일 지연 20~30%
+단축 가능하나 VRAM 여유 필요(`--max-model-len 2048`로 낮춰 확보). 8GB라 trade-off.
 
 ---
 
@@ -541,8 +636,30 @@ def resolve(self, query, ctx):
 ## 시작 명령 요약 (내일 순서)
 
 ```
-1. Part A: chat_server.py 만들고 모델 의존성 제거 → /chat 테스트
-2. Part B: Docker Desktop + GPU 패스스루(nvidia-smi) 확인
-3. Part B: vLLM 이미지가 5060에서 뜨는지부터 검증  ← 여기가 관문
-4. Part C: 연결 + 요약 3종 테스트 + 속도 측정
+1. Part A: chat_server.py 만들고 모델 의존성 제거 → /chat 테스트   ✅ 완료
+2. Part B: Docker Desktop + GPU 패스스루(nvidia-smi) 확인          ✅ 완료
+3. Part B: vLLM 이미지가 5060에서 뜨는지부터 검증  ← 여기가 관문   ✅ 통과
+4. Part C: 연결 + 요약 3종 테스트 + 속도 측정                      ✅ 완료
 ```
+
+---
+
+## ▶ 운영 매뉴얼 (2026-06-11 기준, 새 2-서버 구조)
+
+**두 개를 띄운다:**
+
+```powershell
+# 1) 요약용 vLLM (Docker, GPU 사용, 포트 8001) — 먼저 띄우고 기동 대기(~30초)
+docker start vllm-summary        # 최초 1회는 위 Part B 의 docker run 명령으로 생성
+
+# 2) 경량 챗봇 서버 (GPU 불필요, 포트 8000)
+python C:\Users\woojin\chat_server.py
+```
+
+- Java(`AIUtil`)는 그대로 `localhost:8000`만 호출 → **수정 불필요**.
+- `/chat`(챗봇)은 vLLM 없이도 즉시 동작. `/summarize`만 vLLM(8001) 필요.
+- **컨테이너 첫 요약은 ~88초(콜드 스타트)**, 이후 12~16초. 운영 시 기동 직후
+  더미 요약 1회로 워밍업 권장.
+- 종료: `docker stop vllm-summary` + chat_server 프로세스 종료.
+- **롤백**: vLLM에 문제 생기면 기존 `model_server_qwen.py`(백업 보존)를 8000에
+  그대로 띄우면 됨 — 단일 서버 구조로 즉시 복귀.

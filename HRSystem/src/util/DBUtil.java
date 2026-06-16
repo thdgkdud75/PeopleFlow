@@ -10,7 +10,7 @@ public class DBUtil {
     private static final String PASSWORD;
 
     static {
-        URL = getEnv("DB_URL", "jdbc:mysql://localhost:3306/hrdb?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8");
+        URL = getEnv("DB_URL", "jdbc:mysql://localhost:3306/hrdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8");
         USER = getEnv("DB_USER", "root");
         PASSWORD = getRequiredEnv("DB_PASSWORD");
         try {
