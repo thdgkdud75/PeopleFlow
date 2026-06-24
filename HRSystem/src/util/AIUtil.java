@@ -10,6 +10,7 @@ public class AIUtil {
 
     private static final String LOCAL_MODEL_URL      = "http://localhost:8000/chat";
     private static final String LOCAL_SUMMARIZE_URL  = "http://localhost:8000/summarize";
+    private static final String LOCAL_GENERATE_URL   = "http://localhost:8000/generate";
 
     /**
      * 파인튜닝된 EXAONE 로컬 모델 호출 (model_server.py 가 실행 중이어야 함).
@@ -83,6 +84,37 @@ public class AIUtil {
             InputStream es = conn.getErrorStream();
             String err = es != null ? new String(es.readAllBytes(), StandardCharsets.UTF_8) : "(no body)";
             throw new RuntimeException("Summarize 오류 " + status + ": " + err);
+        }
+        try (InputStream is = conn.getInputStream()) {
+            return extractAnswer(new String(is.readAllBytes(), StandardCharsets.UTF_8));
+        }
+    }
+
+    /**
+     * 자유 생성 호출 (/generate). 근태 분석·인사평가서처럼 데이터 기반 보고서를 작성할 때 사용.
+     * 결정론적 챗봇(/chat)과 달리 systemPrompt 지시대로 SLM이 직접 생성한다.
+     */
+    public static String callGenerate(String systemPrompt, String content, int maxTokens) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection)
+            URI.create(LOCAL_GENERATE_URL).toURL().openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        conn.setDoOutput(true);
+        conn.setConnectTimeout(10_000);
+        conn.setReadTimeout(120_000);
+
+        String body = "{\"system\":\"" + escapeJson(systemPrompt == null ? "" : systemPrompt) + "\""
+                    + ",\"content\":\"" + escapeJson(content) + "\""
+                    + ",\"max_tokens\":" + maxTokens + "}";
+
+        try (OutputStream os = conn.getOutputStream()) {
+            os.write(body.getBytes(StandardCharsets.UTF_8));
+        }
+        int status = conn.getResponseCode();
+        if (status != 200) {
+            InputStream es = conn.getErrorStream();
+            String err = es != null ? new String(es.readAllBytes(), StandardCharsets.UTF_8) : "(no body)";
+            throw new RuntimeException("Generate 오류 " + status + ": " + err);
         }
         try (InputStream is = conn.getInputStream()) {
             return extractAnswer(new String(is.readAllBytes(), StandardCharsets.UTF_8));

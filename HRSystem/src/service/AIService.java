@@ -34,7 +34,12 @@ public class AIService {
             yearMonth, total, late, absent, earlyLeave, total - late - absent - earlyLeave
         );
 
-        return AIUtil.callLocalModel(null, dataStr, 500);
+        String system =
+            "당신은 HR 근태 분석 담당자입니다. 아래 월간 근태 요약 데이터를 바탕으로 "
+            + "근태 현황을 분석하는 간결한 리포트를 한국어로 작성하세요. 다음 형식을 따르세요.\n\n"
+            + "📊 근태 분석 리포트\n\n▶ 종합 현황\n- ...\n\n⚠️ 특이사항\n- ...\n\n💡 개선 제안\n- ...";
+
+        return AIUtil.callGenerate(system, dataStr, 500);
     }
 
     public void saveEvalReport(int evalId, String aiReport) throws Exception {
@@ -53,6 +58,11 @@ public class AIService {
             eval.getEmpName(), eval.getEvalPeriod(), eval.getScore(), eval.getGrade(), workSummary, eval.getComments()
         );
 
-        return AIUtil.callLocalModel(null, dataStr, 500);
+        String system =
+            "당신은 HR 인사평가 전문가입니다. 아래 평가 데이터를 바탕으로 객관적이고 전문적인 "
+            + "인사 평가서를 한국어로 작성하세요. 다음 형식을 따르세요.\n\n"
+            + "📋 인사 평가서\n\n▶ 종합 의견\n- ...\n\n✅ 강점\n- ...\n\n📈 개선 영역\n- ...\n\n🎯 향후 기대\n- ...";
+
+        return AIUtil.callGenerate(system, dataStr, 500);
     }
 }
