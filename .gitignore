@@ -96,3 +96,17 @@ pom.xml.releaseBackup
 
 .image/
 SERVER_GUIDE.md
+
+# ========================
+# 발표 자료 (깃에 올리지 않음)
+# ========================
+*.pdf
+*.ppt
+*.pptx
+# 발표용 마크다운 (README 등 일반 문서는 추적 유지)
+PeopleFlow_발표대본.md
+발표자료_초안.md
+PeopleFlow_발표대본.pdf
+PeopleFlow_발표자료.pptx
+# 발표자료 생성 스크립트
+build_pptx.py

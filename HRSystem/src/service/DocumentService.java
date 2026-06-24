@@ -39,7 +39,7 @@ public class DocumentService {
         String content = "[업무일지]\n날짜: " + w.getLogDate() + "\n내용:\n" + w.getContent();
         log.info("[DEBUG] calling callSummarize, content length=" + content.length());
         try {
-            String summary = AIUtil.callSummarize("worklog", content);
+            String summary = AIUtil.callSummarize("worklog", content, w.getEmpId());
             log.info("[DEBUG] callSummarize returned: " + (summary == null ? "NULL" : summary.substring(0, Math.min(50, summary.length()))));
             workLogDao.updateSummary(logId, summary);
             return summary;
@@ -69,7 +69,7 @@ public class DocumentService {
                          "\n날짜: " + m.getMeetingDate() +
                          "\n참석자: " + (m.getAttendees() != null ? m.getAttendees() : "-") +
                          "\n내용:\n" + m.getContent();
-        String summary = AIUtil.callSummarize("meeting", content);
+        String summary = AIUtil.callSummarize("meeting", content, m.getEmpId());
         meetingDao.updateSummary(meetingId, summary);
         return summary;
     }
@@ -94,7 +94,7 @@ public class DocumentService {
                          "\n출장지: " + t.getDestination() +
                          "\n목적: " + t.getPurpose() +
                          "\n내용:\n" + t.getContent();
-        String summary = AIUtil.callSummarize("trip", content);
+        String summary = AIUtil.callSummarize("trip", content, t.getEmpId());
         tripDao.updateSummary(tripId, summary);
         return summary;
     }

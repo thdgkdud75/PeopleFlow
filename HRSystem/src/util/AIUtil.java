@@ -52,8 +52,17 @@ public class AIUtil {
         }
     }
 
-    /** 문서 요약 호출 (업무일지/회의록/출장보고서) */
+    /** 문서 요약 호출 (하위호환 — 작성자 컨텍스트 보강 없이) */
     public static String callSummarize(String docType, String content) throws Exception {
+        return callSummarize(docType, content, 0);
+    }
+
+    /**
+     * 문서 요약 호출 (업무일지/회의록/출장보고서).
+     * empId 를 함께 넘기면 서버의 SummarizeAgent 가 작성자 컨텍스트(소속·직급·최근
+     * 활동)를 DB 도구로 보강해 요약에 반영한다. empId=0 이면 보강 없이 동작.
+     */
+    public static String callSummarize(String docType, String content, int empId) throws Exception {
         HttpURLConnection conn = (HttpURLConnection)
             URI.create(LOCAL_SUMMARIZE_URL).toURL().openConnection();
         conn.setRequestMethod("POST");
@@ -63,7 +72,8 @@ public class AIUtil {
         conn.setReadTimeout(120_000);
 
         String body = "{\"doc_type\":\"" + escapeJson(docType) + "\""
-                    + ",\"content\":\"" + escapeJson(content) + "\"}";
+                    + ",\"content\":\"" + escapeJson(content) + "\""
+                    + ",\"emp_id\":" + empId + "}";
 
         try (OutputStream os = conn.getOutputStream()) {
             os.write(body.getBytes(StandardCharsets.UTF_8));
